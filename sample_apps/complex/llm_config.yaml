@@ -1,0 +1,15 @@
+model: openai/gpt-4.1-2025-04-14
+plugins:
+  - calculate
+max_tool_call_depth: 3
+compactor:
+  kind: sliding_window
+  max_turns: 10
+api:
+  kind: completions
+completion_timeout: 60
+tool_timeout: 30
+log_events: false
+tools:
+  allow: null
+  deny: []
