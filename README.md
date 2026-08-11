@@ -1,16 +1,21 @@
 # llm-platform
 
-**Capability-agnostic LLM tool-calling runtime with a plugin host.**
+> Capability-agnostic LLM tool-calling runtime with a plugin host.
 
-Version **0.2.0**. Generic solver loop for apps that plug in tools (Slack, Jira, calc, and similar). The package owns completion, session, compaction, and plugin composition. Apps own capabilities and product UI.
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](#)
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](#requirements)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+`llm-platform` is a generic solver loop for apps that plug in tools like Slack, Jira, calc, and similar integrations. The package owns completion, session, compaction, and plugin composition. Apps own capabilities and product UI.
 
 > Extracted from the host layer of `slack-search`.
 
 ## Table of contents
 
+- [Overview](#overview)
 - [Features](#features)
 - [Requirements](#requirements)
-- [Install](#install)
+- [Installation](#installation)
 - [Quick start](#quick-start)
 - [How it works](#how-it-works)
 - [Configuration](#configuration)
@@ -20,27 +25,32 @@ Version **0.2.0**. Generic solver loop for apps that plug in tools (Slack, Jira,
 - [Development](#development)
 - [Status](#status)
 - [Documentation](#documentation)
+- [License](#license)
+
+## Overview
+
+Use `llm-platform` when you want a reusable model-driven tool loop without hardcoding domain logic into the host. Define capabilities as plugins, load them per app, and reuse the same runtime across multiple products.
 
 ## Features
 
 - Tool-calling loop with injected `completion_fn` (default: LiteLLM Completions)
-- Plugin host: schemas, callables, optional prompt sections
+- Plugin host for schemas, callables, and optional prompt sections
 - YAML config with validation (`validate_config`)
 - Opt-in builtins: `time`, `todo` (session-scoped)
 - Timeouts for completions and tools
 - Structured events (`on_event` or `log_events`)
-- Tool allow / deny lists
+- Tool allow and deny lists
 - Sliding-window conversation compaction
 - Experimental OpenAI Responses transport (`api.kind: responses`)
 
 ## Requirements
 
 - Python 3.10+
-- A model API key (for example `OPENAI_API_KEY` or `LITELLM_API_KEY`)
+- A model API key, such as `OPENAI_API_KEY` or `LITELLM_API_KEY`
 
-## Install
+## Installation
 
-Local editable install (recommended while developing):
+Local editable install while developing:
 
 ```bash
 pip install -e /path/to/llm-platform
@@ -76,14 +86,14 @@ api:
 
 ## How it works
 
-`llm-platform` is a **generic solver**. It sends the system prompt, tool schemas, and session messages to the model. If the model returns tool calls, the host runs them and continues until a normal answer (or the depth limit).
+`llm-platform` sends the system prompt, tool schemas, and session messages to the model. If the model returns tool calls, the host runs them and continues until a normal answer or the depth limit.
 
 The host does not choose tools in code. The model chooses tools from schemas and the prompt.
 
 | Piece | Role |
-|-------|------|
+| --- | --- |
 | **Host** | Prompt assembly, model call, tool execution, session, compaction, limits |
-| **Plugin** | One problem class: tools + optional prompt section |
+| **Plugin** | One problem class: tools plus optional prompt section |
 | **App** | Which plugins to load, plus config |
 
 Write a plugin per domain. Load one or more plugins in an app. Reuse the same solver across apps.
@@ -91,7 +101,7 @@ Write a plugin per domain. Load one or more plugins in an app. Reuse the same so
 ## Configuration
 
 | Key | Default | Description |
-|-----|---------|-------------|
+| --- | --- | --- |
 | `model` | `openai/gpt-4.1-2025-04-14` | LiteLLM model id |
 | `plugins` | `[]` | Plugin names and/or `{name, import}` mappings |
 | `max_tool_call_depth` | `3` | Max tool rounds per user turn |
@@ -103,7 +113,7 @@ Write a plugin per domain. Load one or more plugins in an app. Reuse the same so
 | `tools.allow` | `null` | Tool name allowlist (`null` = all) |
 | `tools.deny` | `[]` | Tool names to remove after load |
 
-Example with ops knobs:
+Example with operational settings:
 
 ```yaml
 model: openai/gpt-4.1-2025-04-14
@@ -128,7 +138,7 @@ tools:
 
 **Events:** pass `on_event(event, payload)` to `build_runtime`, or set `log_events: true`. Event names include `turn.start`, `turn.end`, `completion.start`, `completion.end`, `tool.call`, `tool.result`, and `error`.
 
-**Timeouts:** use a worker thread. On timeout, completion raises; a tool returns an error string and the loop continues. The worker may still finish in the background.
+**Timeouts:** the runtime uses a worker thread. On timeout, completion raises; a tool returns an error string and the loop continues. The worker may still finish in the background.
 
 ## Plugins
 
@@ -152,11 +162,11 @@ plugins:
 ### Builtins (opt-in)
 
 | Name | Tools | Notes |
-|------|-------|-------|
+| --- | --- | --- |
 | `time` | `get_current_time` | ISO-8601 + IANA timezone |
 | `todo` | `todo_add`, `todo_list`, `todo_complete`, `todo_clear` | Session-scoped only |
 
-Off by default. Domain APIs (Slack, Jira, …) stay in the app, not in builtins.
+Off by default. Domain APIs like Slack and Jira stay in the app, not in builtins.
 
 ### Experimental: Responses API
 
@@ -170,7 +180,7 @@ Maps Completions-shaped sessions through `litellm.responses`. Function tools onl
 ## Sample apps
 
 | Path | Description |
-|------|-------------|
+| --- | --- |
 | [`sample_apps/simple/`](sample_apps/simple/) | Math Q&A, no plugins |
 | [`sample_apps/complex/`](sample_apps/complex/) | App-local `calculate` plugin |
 
@@ -184,7 +194,7 @@ python main.py
 
 ## Project layout
 
-```
+```text
 llm-platform/
 ├── src/llm_platform/
 │   ├── runtime.py           # Tool loop, session, timeouts, events
@@ -213,7 +223,7 @@ pytest
 Suitable for local multi-project use via editable install. Not a multi-tenant production platform.
 
 | Surface | Status |
-|---------|--------|
+| --- | --- |
 | Completions transport | Supported |
 | Plugin host + tool loop | Supported |
 | Builtins `time` / `todo` | Supported (opt-in) |
@@ -225,7 +235,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release notes.
 ## Documentation
 
 | Doc | Description |
-|-----|-------------|
+| --- | --- |
 | [HOWTO.md](HOWTO.md) | Step-by-step math app from scratch |
 | [CHANGELOG.md](CHANGELOG.md) | Version history and stability notes |
 | [sample_apps/simple/](sample_apps/simple/) | Minimal runnable sample |
